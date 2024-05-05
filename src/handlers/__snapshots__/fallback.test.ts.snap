@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`snapshot of error provided executes as expected 1`] = `
+{
+  "body": "{"message":"This endpoint doesn't exist, check \`paths\` for a list of all endpoints.","paths":[]}",
+  "headers": {
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Allow-Origin": "*",
+    "Content-Type": "application/json",
+  },
+  "statusCode": 200,
+}
+`;

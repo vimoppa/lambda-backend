@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig.json",
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  },
+  "compilerOptions": {
+    "target": "es2019",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "noEmit": false,
+    "jsx": "preserve",
+    "allowJs": true,
+    "sourceMap": true,
+    "noImplicitThis": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "useUnknownInCatchVariables": false,
+    "strictNullChecks": false,
+    "lib": ["ES2019"],
+    "removeComments": true
+  },
+  "include": ["src"]
+}

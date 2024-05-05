@@ -1,0 +1,133 @@
+service: delvent-storage
+
+configValidationMode: error
+
+package:
+  individually: false
+  excludeDevDependencies: true
+useDotenv: true
+
+params:
+  prod:
+    DOMAIN: 'api.storage.delvent.io'
+    region: 'us-east-1'
+    memorySize: 1024
+  staging:
+    DOMAIN: 'staging-api.storage.delvent.io'
+    region: 'eu-north-1'
+    memorySize: 768
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  memorySize: ${param:memorySize}
+  timeout: 120
+  region: ${param:region}
+  endpointType: REGIONAL # Set to regional because the api gateway will be behind a cloudfront distribution
+  stage: staging # Default to dev if no stage is specified
+  tracing: # Enable X-Ray tracing (debugging)
+    apiGateway: true
+    lambda: true
+  iam:
+    role:
+      statements:
+        - Effect: Allow # X-Ray permissions
+          Action:
+            - xray:PutTraceSegments
+            - xray:PutTelemetryRecords
+          Resource: '*'
+        - Effect: Allow # Lambda logs on cloudwatch
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource:
+            - 'Fn::Join':
+                - ':'
+                - - 'arn:aws:logs'
+                  - Ref: 'AWS::Region'
+                  - Ref: 'AWS::AccountId'
+                  - 'log-group:/aws/lambda/*:*:*'
+        # For warm-up functions
+        - Effect: 'Allow'
+          Action:
+            - 'lambda:InvokeFunction'
+          Resource: '*'
+        # For the Secrets Manager, used for the wallet system integration credientials.
+        - Effect: 'Allow'
+          Action:
+            - 'secretsmanager:GetSecretValue'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action:
+            - 'kms:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action:
+            - 's3:*'
+          Resource: 'arn:aws:s3:::*'
+        - Effect: 'Allow'
+          Action:
+            - 'cognito-idp:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action:
+            - 'apigateway:*'
+          Resource: '*'
+  environment:
+    stage: ${self:custom.stage}
+    local: ${self:custom.local}
+    region: ${self:provider.region}
+    API_URL: ${param:DOMAIN}
+    DATABASE_URL: ${param:DATABASE_URL}
+
+custom:
+  cronEnabled: ${param:cronEnabled, true}
+  stage: ${opt:stage, self:provider.stage}
+  local: ${param:local, false}
+  domain: ${param:DOMAIN}
+
+  serverless-offline:
+    httpPort: 7200
+    lambdaPort: 7201
+    useChildProcesses: ${opt:useChildProcesses, false}
+
+  # customDomain:
+  #   domainName: ${self:custom.domain}
+  #   stage: ${self:custom.stage}
+  #   certificateArn: ${self:custom.certificateArn}
+  #   createRoute53Record: true
+  #   createRoute53IPv6Record: true
+  #   endpointType: 'regional'
+  #   autoDomain: true
+
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+    packager: 'npm'
+    excludeFiles: src/**/*.test.ts
+
+  warmup:
+    # A warmer enabled globally for all functions.
+    # See: https://github.com/juanjoDiaz/serverless-plugin-warmup#configuration
+    defaultWarmer:
+      enabled: true
+      events:
+        - schedule: rate(5 minutes)
+      prewarm: true # Will warm up your lambdas right after deploying.
+      concurrency: 1
+
+  prune:
+    automatic: true
+    number: 5 # Number of versions to keep
+
+functions:
+  - ${file(resources/functions/v1.yml)}
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+  - serverless-prune-plugin
+  - serverless-plugin-warmup
+  - serverless-dotenv-plugin
+  # - serverless-domain-manager

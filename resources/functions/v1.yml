@@ -1,0 +1,15 @@
+corsPreflight:
+  handler: src/handlers/corsPreflight.default
+  events:
+    - http:
+        path: /{params+}
+        method: options
+fallback:
+  handler: src/handlers/fallback.default
+  events:
+    - http:
+        path: /{params+}
+        method: any
+        cors:
+          origin: '*'
+          cacheControl: 'max-age=3600, s-maxage=3600'

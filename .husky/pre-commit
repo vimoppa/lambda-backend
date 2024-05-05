@@ -1,0 +1,6 @@
+#!/bin/sh
+[ -n "$CI" ] && exit 0 # Don't run husky pre-commit script in CI.
+
+. "$(dirname "$0")/_/husky.sh"
+
+npx lint-staged
